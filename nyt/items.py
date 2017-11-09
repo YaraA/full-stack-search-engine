@@ -12,4 +12,7 @@ class NytItem(scrapy.Item):
     # the fields for the nyt item:
     authors = scrapy.Field()
     title = scrapy.Field()
+    body = scrapy.Field()
+    url = scrapy.Field()
+
     pass

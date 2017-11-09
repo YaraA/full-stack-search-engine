@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 import scrapy
+import json
 from newspaper import Article
 from nyt.items import NytItem
 from scrapy.contrib.spiders import CrawlSpider, Rule
@@ -17,17 +18,26 @@ def getWebpageInfo(url):
     articleUrl = webpage.url
     return articleTitle, articleAuthors, articleTextContent, articleUrl
 
-def createNytItem(articleTitle, articleAuthors):
+def createNytItem(articleTitle, articleAuthors, articleUrl, articleBody):
     # instantiate a new nyt item
     item = NytItem()
     item['title'] = articleTitle
     item['authors'] = articleAuthors
+    item['url'] = articleUrl
+    item['body'] = articleBody
+
     return item
 
 def writeArticleToFile(fileName, fileContent):
     # write fileContent to a file with name 'fileName' in articles folder
     f = open('articles/' + fileName, 'w', encoding='utf8')
     f.write(fileContent)
+    f.close()
+
+def writeArticleToJSON(fileName, fileContent):
+    # write fileContent to a file with name 'fileName' in articles folder
+    f = open('articles/' + fileName + ".json", 'w', encoding='utf8')
+    f.write(json.dumps(dict(fileContent)))
     f.close()
 
 class NytcrawlerSpider(CrawlSpider):
@@ -48,15 +58,18 @@ class NytcrawlerSpider(CrawlSpider):
         # extracting the title, authors and text content from the webpage
         articleTitle, articleAuthors, articleTextContent, articleUrl = getWebpageInfo(response.url)
         # create a new nyt item containing the article's title and authors
-        item = createNytItem(articleTitle, articleAuthors)
+        item = createNytItem(articleTitle, articleAuthors, articleUrl, articleTextContent)
         # concatenate the authors of the webpage in a string
         authors = ""
         for author in articleAuthors:
-            authors +=  author + "   "
+            authors +=  author + ",  "
+        authors = authors[:len(authors)-2]
         # write the author, url and text content of every article to a file
         fileName = str(self.idx) + "-" + articleTitle
         fileContent = authors + "\n"  + articleUrl + "\n"  + articleTextContent
-        writeArticleToFile(fileName, fileContent)
+        # writeArticleToFile(fileName, fileContent)
+        writeArticleToJSON(fileName, item)
+
         # increment the nyt item counter
         self.idx+=1
         return item
