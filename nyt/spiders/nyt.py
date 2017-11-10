@@ -5,6 +5,7 @@ from newspaper import Article
 from nyt.items import NytItem
 from scrapy.contrib.spiders import CrawlSpider, Rule
 from scrapy.contrib.linkextractors import LinkExtractor
+import pathlib
 
 def getWebpageInfo(url):
     # initializing and parsing an Article by giving the webpage url
@@ -25,20 +26,14 @@ def createNytItem(articleTitle, articleAuthors, articleUrl, articleBody):
     item['authors'] = articleAuthors
     item['url'] = articleUrl
     item['body'] = articleBody
-
     return item
-
-def writeArticleToFile(fileName, fileContent):
-    # write fileContent to a file with name 'fileName' in articles folder
-    f = open('articles/' + fileName, 'w', encoding='utf8')
-    f.write(fileContent)
-    f.close()
 
 def writeArticleToJSON(fileName, fileContent):
     # write fileContent to a file with name 'fileName' in articles folder
-    f = open('articles/' + fileName + ".json", 'w', encoding='utf8')
-    f.write(json.dumps(dict(fileContent)))
-    f.close()
+    pathlib.Path('articles').mkdir(parents=True, exist_ok=True)
+    filePath = 'articles/' + fileName + '.json'
+    with open(filePath, 'w', encoding='utf8') as f:
+        f.write(json.dumps(dict(fileContent)))
 
 class NytcrawlerSpider(CrawlSpider):
     # limit the downloaded articles to 500 articles
@@ -60,16 +55,9 @@ class NytcrawlerSpider(CrawlSpider):
         # create a new nyt item containing the article's title and authors
         item = createNytItem(articleTitle, articleAuthors, articleUrl, articleTextContent)
         # concatenate the authors of the webpage in a string
-        authors = ""
-        for author in articleAuthors:
-            authors +=  author + ",  "
-        authors = authors[:len(authors)-2]
-        # write the author, url and text content of every article to a file
         fileName = str(self.idx) + "-" + articleTitle
-        fileContent = authors + "\n"  + articleUrl + "\n"  + articleTextContent
-        # writeArticleToFile(fileName, fileContent)
         writeArticleToJSON(fileName, item)
 
         # increment the nyt item counter
-        self.idx+=1
+        self.idx += 1
         return item
