@@ -14,5 +14,5 @@ class NytItem(scrapy.Item):
     title = scrapy.Field()
     body = scrapy.Field()
     url = scrapy.Field()
-
+    summary = scrapy.Field()
     pass
