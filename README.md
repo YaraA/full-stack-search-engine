@@ -11,7 +11,7 @@ Github: https://github.com/YaraA/full-stack-search-engine/
 1. cd inside the project directory in the terminal.
 1. Run the command `scrapy crawl nyt`.
 1. Check the articles directory for the crawled articles in `json` format.
-1. Each article is a json file consisting of its `title`, `authors`, `url`, `body` and a `summary` of maximum `5` sentences.
+1. Each article is a json file consisting of its `title`, `authors`, `url`, `body` and a `summary` of maximum `4` sentences.
 
 ## Running the indexer
 1. Install required libraries for `Python3+` using pip or conda:
@@ -20,6 +20,6 @@ Github: https://github.com/YaraA/full-stack-search-engine/
 1. Run `elastic search` server.
 1. Install `jupyter notebook`.
 1. Run jupyter from the terminal inside the project directory using `jupyter notebook`.
-1. In Jupyter, open the notebook `elastic-search`.
+1. In Jupyter, open the notebook `elastic-search.ipynb`.
 1. Run cells in order by clicking the `Cell` tab then `Run All`.
 1. Check the result of each cell (if any).
