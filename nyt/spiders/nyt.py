@@ -1,11 +1,16 @@
 # -*- coding: utf-8 -*-
-import scrapy
 import json
+import pathlib
+import scrapy
 from newspaper import Article
 from nyt.items import NytItem
 from scrapy.contrib.spiders import CrawlSpider, Rule
 from scrapy.contrib.linkextractors import LinkExtractor
-import pathlib
+from sumy.summarizers.lsa import LsaSummarizer as Summarizer
+from sumy.nlp.stemmers import Stemmer
+from sumy.nlp.tokenizers import Tokenizer
+from sumy.utils import get_stop_words
+from sumy.parsers.plaintext import PlaintextParser
 
 def getWebpageInfo(url):
     # initializing and parsing an Article by giving the webpage url
@@ -19,13 +24,14 @@ def getWebpageInfo(url):
     articleUrl = webpage.url
     return articleTitle, articleAuthors, articleTextContent, articleUrl
 
-def createNytItem(articleTitle, articleAuthors, articleUrl, articleBody):
+def createNytItem(articleTitle, articleAuthors, articleUrl, articleBody, summary):
     # instantiate a new nyt item
     item = NytItem()
     item['title'] = articleTitle
     item['authors'] = articleAuthors
     item['url'] = articleUrl
     item['body'] = articleBody
+    item['summary'] = summary
     return item
 
 def writeArticleToJSON(fileName, fileContent):
@@ -34,7 +40,17 @@ def writeArticleToJSON(fileName, fileContent):
     filePath = 'articles/' + fileName + '.json'
     with open(filePath, 'w', encoding='utf8') as f:
         f.write(json.dumps(dict(fileContent)))
-
+def summarizeArticle(articleText, summarySize):
+    stemmer = Stemmer("english")
+    summarizer = Summarizer(stemmer)
+    summarizer.stop_words = get_stop_words("english")
+    parser = PlaintextParser.from_string(articleText, Tokenizer("english"))
+    summary =  summarizer(parser.document, summarySize)
+    result = ""
+    for sentence in summary:
+       result += sentence._text
+    return result
+#-------------------------------------------------------------------------------
 class NytcrawlerSpider(CrawlSpider):
     # limit the downloaded articles to 500 articles
     custom_settings = { 'CLOSESPIDER_ITEMCOUNT': 500}
@@ -50,14 +66,16 @@ class NytcrawlerSpider(CrawlSpider):
 
     def parse_item(self, response):
         self.log("Scraping: " + response.url)
+
         # extracting the title, authors and text content from the webpage
         articleTitle, articleAuthors, articleTextContent, articleUrl = getWebpageInfo(response.url)
-        # create a new nyt item containing the article's title and authors
-        item = createNytItem(articleTitle, articleAuthors, articleUrl, articleTextContent)
-        # concatenate the authors of the webpage in a string
+        #summarize the article in 5 sentences
+        summary = summarizeArticle(articleTextContent, 5)
+        print(summary)
+        # create a new nyt item containing the article title, authors, url, content and summary
+        item = createNytItem(articleTitle, articleAuthors, articleUrl, articleTextContent, summary)
         fileName = str(self.idx) + "-" + articleTitle
         writeArticleToJSON(fileName, item)
-
         # increment the nyt item counter
         self.idx += 1
         return item
