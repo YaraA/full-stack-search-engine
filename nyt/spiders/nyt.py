@@ -48,8 +48,8 @@ def summarizeArticle(articleText, summarySize):
     summary =  summarizer(parser.document, summarySize)
     result = ""
     for sentence in summary:
-       result += sentence._text
-    return result
+       result += sentence._text + " "
+    return result[:len(result)-1]
 #-------------------------------------------------------------------------------
 class NytcrawlerSpider(CrawlSpider):
     # limit the downloaded articles to 500 articles
@@ -60,7 +60,7 @@ class NytcrawlerSpider(CrawlSpider):
     # the url scrapy will start with
     start_urls = ['https://www.nytimes.com/section/world/europe']
     # scrapy will extract the links that satisfy the regex rule
-    rules = (Rule(LinkExtractor(allow=[r'\d{4}/\d{2}/\d{2}/world/europe/[a-z][^/]+']), callback="parse_item", follow=True),)
+    rules = (Rule(LinkExtractor(allow=[r'^https:\/\/www\.nytimes\.com\/\d{4}\/\d{2}\/\d{2}\/world\/europe\/[a-z][^\/]+']), callback="parse_item", follow=True),)
     # nyt item counter
     idx = 0
 
@@ -70,8 +70,7 @@ class NytcrawlerSpider(CrawlSpider):
         # extracting the title, authors and text content from the webpage
         articleTitle, articleAuthors, articleTextContent, articleUrl = getWebpageInfo(response.url)
         #summarize the article in 5 sentences
-        summary = summarizeArticle(articleTextContent, 5)
-        print(summary)
+        summary = summarizeArticle(articleTextContent, 4)
         # create a new nyt item containing the article title, authors, url, content and summary
         item = createNytItem(articleTitle, articleAuthors, articleUrl, articleTextContent, summary)
         fileName = str(self.idx) + "-" + articleTitle
